@@ -66,7 +66,15 @@ Requirements: elementary OS 8 with Pantheon. Remmina need not be installed yet
 
 Then restart the panel (it is respawned automatically):
 
-    pkill -x -f io.elementary.wingpanel
+    for p in /proc/[0-9]*; do
+        case "$(readlink "$p/exe" 2>/dev/null)" in
+            *io.elementary.wingpanel*) kill "${p#/proc/}" ;;
+        esac
+    done
+
+The panel is found through `/proc/PID/exe` rather than with `pkill -f`, because
+matching on the command line can also hit the shell or script doing the
+killing. The installer script restarts the panel the same way.
 
 Note `libgranite-dev` is granite **6** — wingpanel 8 is GTK3 and links
 `libgranite.so.6`. Granite 7 is the GTK4 build and is the wrong one here.
@@ -76,8 +84,14 @@ pkg-config file, currently `/usr/lib/x86_64-linux-gnu/wingpanel`).
 
 ### Uninstall
 
+    ./install-remmina-indicator.sh --revert
+
+That removes the plugin from wingpanel's `indicatorsdir` and restarts the
+panel. By hand, the same thing is:
+
     sudo rm /usr/lib/x86_64-linux-gnu/wingpanel/libwingpanel-indicator-remmina.so
-    pkill -x -f io.elementary.wingpanel
+
+followed by the panel restart shown above.
 
 ## Notes
 
